@@ -45,24 +45,24 @@ int main(int argc, char **argv)
     // 点云变量
     // 使用智能指针，创建一个空点云。这种指针用完会自动释放。
     PointCloud<PointXYZRGB>::Ptr cloud(new PointCloud<PointXYZRGB>);
-    PointCloud<PointXYZRGB>::Ptr cloud_sum(new PointCloud<PointXYZRGB>);
+    // PointCloud<PointXYZRGB>::Ptr cloud_sum(new PointCloud<PointXYZRGB>);
 
 
-    for (int i = 0; i < files_json.size(); i++)
-    {
-        cout << "name : " << files_json[i] << endl;
-        pcl::io::loadPCDFile(files_json[i], *cloud);
-        *cloud_sum = *cloud_sum + *cloud;
-        cloud->points.clear();
-        cout << "sum " << i << " / " << files_json.size() <<  "done" << endl;
-    }
-    pcl::io::savePCDFile("cloud_sum.pcd", *cloud_sum);
+    // for (int i = 0; i < files_json.size(); i++)
+    // {
+    //     cout << "name : " << files_json[i] << endl;
+    //     pcl::io::loadPCDFile(files_json[i], *cloud);
+    //     *cloud_sum = *cloud_sum + *cloud;
+    //     cloud->points.clear();
+    //     cout << "sum " << i << " / " << files_json.size() <<  "done" << endl;
+    // }
+    // pcl::io::savePCDFile("cloud_sum.pcd", *cloud_sum);
 
 
-    // boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
+    boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
 
-    // viewer->setBackgroundColor(0, 0, 0);
-/*
+    viewer->setBackgroundColor(0, 0, 0);
+
     for (int i = 2; i < files_json.size(); i++)
     {
 
@@ -111,28 +111,27 @@ int main(int argc, char **argv)
         cout << "Point cloud saved." << endl;
         cout << "next pcd reading..." << endl;
     }
-*/
-    // cloud->width = 1;
-    // cloud->height = cloud->points.size();
 
-    // depth_cloud->width = 1;
-    // depth_cloud->height = cloud->points.size();
+    cloud->width = 1;
+    cloud->height = cloud->points.size();
 
-    // pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb_cloud(cloud);
-    // viewer->addPointCloud<pcl::PointXYZRGB>(cloud, rgb_cloud, "sample cloud");
-    // viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "sample cloud");
-    // viewer->addCoordinateSystem(1.0);
+    depth_cloud->width = 1;
+    depth_cloud->height = cloud->points.size();
 
-    // // cv::imwrite("vignette.jpeg", test);
-    // while (!viewer->wasStopped())
-    // {
-    //     viewer->spinOnce(100);
-    //     boost::this_thread::sleep(boost::posix_time::microseconds(100000));
-    // }
-    // cv::waitKey(0);
-    // viewer->removeAllPointClouds();
+    pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb_cloud(cloud);
+    viewer->addPointCloud<pcl::PointXYZRGB>(cloud, rgb_cloud, "sample cloud");
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "sample cloud");
+    viewer->addCoordinateSystem(1.0);
 
-    // cv::waitKey(0);
+    // cv::imwrite("vignette.jpeg", test);
+    while (!viewer->wasStopped())
+    {
+        viewer->spinOnce(100);
+        boost::this_thread::sleep(boost::posix_time::microseconds(100000));
+    }
+    cv::waitKey(0);
+    viewer->removeAllPointClouds();
+
 
     return 0;
 }
