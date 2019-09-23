@@ -18,7 +18,9 @@
 #include <iostream>
 #include <boost/foreach.hpp>
 #include <vector>
-
+#include <map>
+#include <string>
+using namespace std;
 namespace Utils
 {
 
@@ -76,6 +78,34 @@ getXYZpoints(const boost::property_tree::ptree &pt, std::vector<Eigen::Vector3d>
             // std::cout << rgb_point.transpose() << std::endl;
             XYZ.push_back(xyz_point);
         }
+    }
+
+    return true;
+}
+
+inline bool
+getBbox(const boost::property_tree::ptree &pt, std::map<string,Eigen::Matrix<double,6,1>> &Bbox)
+{
+    // Read in Bbox
+    // string name;
+    Eigen::Matrix<double,6,1> Bbox_point;
+    int i = 0;
+
+    boost::property_tree::ptree object = pt.get_child("object");
+    BOOST_FOREACH (boost::property_tree::ptree::value_type &vtt, object)
+    {
+
+        boost::property_tree::ptree pt_tree = vtt.second;
+        string name_point = pt_tree.get<string>("name");
+
+        boost::property_tree::ptree point = pt_tree.get_child("Bbox");
+        BOOST_FOREACH (boost::property_tree::ptree::value_type &v, point)
+        {
+                Bbox_point[i] = v.second.get_value<float>();
+                i++;               
+        }
+        i=0;
+        Bbox.insert(std::map<string,Eigen::Matrix<double,6,1>>::value_type(name_point,Bbox_point));
     }
 
     return true;

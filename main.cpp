@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <cstring>
+#include <map>
 
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
@@ -21,20 +22,21 @@
 #include <pcl/PolygonMesh.h>
 #include <pcl/point_cloud.h>
 #include <pcl/io/vtk_lib_io.h>
+#include <pcl/console/parse.h>
 
 #include "pcl_utils.h"
 
+#include "json/json.h"
 
 using namespace std;
 using namespace Eigen;
 using namespace cv;
 using namespace pcl;
 
-
 int main(int argc, char **argv)
 {
 
-    string filename = "point_data/";
+    string filename = "Adata/";
 
     vector<String> files_json; //存放文件路径
 
@@ -47,7 +49,6 @@ int main(int argc, char **argv)
     PointCloud<PointXYZRGB>::Ptr cloud(new PointCloud<PointXYZRGB>);
     // PointCloud<PointXYZRGB>::Ptr cloud_sum(new PointCloud<PointXYZRGB>);
 
-
     // for (int i = 0; i < files_json.size(); i++)
     // {
     //     cout << "name : " << files_json[i] << endl;
@@ -58,12 +59,47 @@ int main(int argc, char **argv)
     // }
     // pcl::io::savePCDFile("cloud_sum.pcd", *cloud_sum);
 
-
     boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer(new pcl::visualization::PCLVisualizer("3D Viewer"));
 
     viewer->setBackgroundColor(0, 0, 0);
+/*
+    //根节点
+    Json::Value root;
 
-    for (int i = 2; i < files_json.size(); i++)
+    //根节点属性
+    root["name"] = Json::Value("Tsybius");
+    root["age"] = Json::Value(23);
+    root["sex_is_male"] = Json::Value(true);
+
+    //子节点
+    Json::Value partner;
+
+    //子节点属性
+    partner["partner_name"] = Json::Value("Galatea");
+    partner["partner_age"] = Json::Value(21);
+    partner["partner_sex_is_male"] = Json::Value(false);
+
+    //子节点挂到根节点上
+    root["partner"] = Json::Value(partner);
+
+    //数组形式
+    root["achievement"].append("ach1");
+    root["achievement"].append("ach2");
+    root["achievement"].append("ach3");
+
+    //缩进输出
+    cout << "StyledWriter:" << endl;
+    Json::StyledWriter sw;
+    cout << sw.write(root) << endl
+         << endl;
+
+    //输出到文件
+    ofstream os;
+    os.open("PersonalInfo.json");
+    os << sw.write(root);
+    os.close();
+*/
+    for (int i = 3; i < 4; i++)
     {
 
         //     cout << "read name :" << i << " : " << files[i/3] << endl;
@@ -77,15 +113,36 @@ int main(int argc, char **argv)
 
         std::vector<Eigen::Vector3d> RGB_color;
         if (!Utils::getRGBcolor(pose_pt, RGB_color))
-            ;
+            cout << "read RGB failed!" << endl;
 
         std::vector<Eigen::Vector3d> points;
         if (!Utils::getXYZpoints(pose_pt, points))
+            cout << "read XYZ failed!" << endl;
+
+        // read the Bbox
+        std::map<string, Eigen::Matrix<double, 6, 1>> Bbox;
+        if (!Utils::getBbox(pose_pt, Bbox))
             ;
+
         cout << "read date done.." << endl;
         // cout << "global_name : " << global_name << endl;
         // cout << "RGB_color_size : " << RGB_color.size() << endl;
         // cout << "points_size : " << points.size() << endl;
+        cout << "Bbox_size : " << Bbox.size() << endl;
+
+        for (auto iter = Bbox.begin(); iter != Bbox.end(); iter++)
+        {
+            string name_point = iter->first;
+            Eigen::Matrix<double, 6, 1> Bbox_point = iter->second;
+            //  addCube (float x_min, float x_max, float y_min, float y_max, float z_min, float z_max,
+            //double r = 1.0, double g = 1.0, double b = 1.0, const std::string &id = "cube", int viewport = 0);
+            viewer->addCube(Bbox_point[0], Bbox_point[3], Bbox_point[1],
+                            Bbox_point[4], Bbox_point[2], Bbox_point[5],
+                            0, 1, 0,
+                            name_point, 0);
+
+            cout << name_point << endl;
+        }
 
         for (int j = 0; j < RGB_color.size(); j++)
         {
@@ -103,20 +160,17 @@ int main(int argc, char **argv)
         }
         cout << i << "point number :" << cloud->points.size() << endl;
 
-        String ss = "pointcloud_" + name + ".pcd";
-        pcl::io::savePCDFile(ss, *cloud);
+        // String ss = "pointcloud_" + name + ".pcd";
+        // pcl::io::savePCDFile(ss, *cloud);
 
         // 清除数据并退出
-        cloud->points.clear();
-        cout << "Point cloud saved." << endl;
+        // cloud->points.clear();
+        // cout << "Point cloud saved." << endl;
         cout << "next pcd reading..." << endl;
     }
 
     cloud->width = 1;
     cloud->height = cloud->points.size();
-
-    depth_cloud->width = 1;
-    depth_cloud->height = cloud->points.size();
 
     pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb_cloud(cloud);
     viewer->addPointCloud<pcl::PointXYZRGB>(cloud, rgb_cloud, "sample cloud");
@@ -132,6 +186,8 @@ int main(int argc, char **argv)
     cv::waitKey(0);
     viewer->removeAllPointClouds();
 
+    // 清除数据并退出
+    cloud->points.clear();
 
     return 0;
 }
